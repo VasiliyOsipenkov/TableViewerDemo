@@ -62,6 +62,8 @@ public class MainFrame extends JFrame {
                             JOptionPane.QUESTION_MESSAGE) != JOptionPane.YES_OPTION)
                         return;
                 }
+                if(f.getName().endsWith(".csv"))
+                    saveCsv(f);
                 if(f.getName().endsWith(".dat"))
                     saveDat(f);
             }
@@ -104,6 +106,24 @@ public class MainFrame extends JFrame {
             ((DefaultTableModel)table.getModel()).setDataVector(data, colHdrs);
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, ex, "Error reading DAT file", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void saveCsv(File f) {
+        DefaultTableModel tm = (DefaultTableModel) table.getModel();
+        String[] colHdrs = new String[tm.getColumnCount()];
+        for (int i = 0; i < colHdrs.length; i++) {
+            colHdrs[i] = tm.getColumnName(i);
+        }
+        Vector<Vector> rows = tm.getDataVector();
+        Object[][] data = new Object[rows.size()][];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = rows.get(i).toArray();
+        }
+        try {
+            CsvSupport.writeCsv(f, colHdrs, data);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, ex, "Error saving dat-file", JOptionPane.ERROR_MESSAGE);
         }
     }
 

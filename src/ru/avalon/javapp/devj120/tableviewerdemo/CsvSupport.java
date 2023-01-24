@@ -1,9 +1,6 @@
 package ru.avalon.javapp.devj120.tableviewerdemo;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,5 +51,18 @@ public class CsvSupport {
             res.add(v);
         }
         return res.toArray(new String[0]);
+    }
+
+    public static void writeCsv(File target, String[] colHdrs, Object[][] data) throws IOException {
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(target))) {
+
+            for (Object[] row : data) {
+                for (Object v : row) {
+                    out.writeByte(v != null ? '*' : '-');
+                    if(v != null)
+                        out.writeUTF((String)v);
+                }
+            }
+        }
     }
 }

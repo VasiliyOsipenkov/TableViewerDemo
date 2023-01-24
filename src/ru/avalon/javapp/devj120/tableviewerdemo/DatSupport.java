@@ -16,7 +16,7 @@ public class DatSupport {
     public static String[][] readDat(File file) throws IOException {
         List<String[]> res = new ArrayList<>();
         try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(file))) {
-            // (1) идентификатор формата читаем
+
             char[] datFormat = {'T', 'B', 'L', '1'};
             char[] checkFormat = new char[4];
             for (int i = 0; i < 4; i++) {
@@ -25,7 +25,7 @@ public class DatSupport {
             if (!Arrays.equals(datFormat, checkFormat)) {
                 throw new FileFormatException("Unknown file format");
             }
-            // (2) количество колонок
+
             int columnCount = in.readInt();
 
             // (3) описание колонок. Перед каждой 'S' какой-то неизвестный бит, странно
@@ -78,38 +78,9 @@ public class DatSupport {
                 }
                 res.add(line);
             }
-            /*for (Object[] row : data) { //залить в одномерный массив
-                for (Object v : row) {
-                    out.writeByte(v != null ? '*' : '-');
-                    if(v != null)
-                        out.writeUTF((String)v);
-                }
-            }*/
         }
         return res.toArray(new String[0][]);
     }
-    /*
-    public class CsvSupport {
-    private static final char SEP = ',';
-
-    public static String[][] readCsv(File file) throws IOException {
-        List<String[]> res = new ArrayList<>();
-        try(BufferedReader br = new BufferedReader(new FileReader(file))) {
-            String s;
-            int colCnt = -1;
-            while( ( s = br.readLine() ) != null ) {
-                String[] row = parseLine(s);
-                if(colCnt == -1)
-                    colCnt = row.length;
-                else if(colCnt != row.length)
-                    throw new FileFormatException("Rows contain different number of values.");
-                res.add(row);
-            }
-        }
-        return res.toArray(new String[0][]);
-    }
-
-    */
     public static void writeDat(File target, String[] colHdrs, Object[][] data) throws IOException {
         try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(target))) {
             // (1) идентификатор формата
