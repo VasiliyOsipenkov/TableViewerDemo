@@ -98,7 +98,10 @@ public class MainFrame extends JFrame {
     private void openDat(File f) {
         try {
             String[][] dat = DatSupport.readDat(f);
-
+            String[] colHdrs = dat[0];
+            String[][] data = new String[dat.length - 1][];
+            System.arraycopy(dat, 1, data, 0, data.length);
+            ((DefaultTableModel)table.getModel()).setDataVector(data, colHdrs);
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, ex, "Error reading DAT file", JOptionPane.ERROR_MESSAGE);
         }

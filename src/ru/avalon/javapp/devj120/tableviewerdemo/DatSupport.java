@@ -16,7 +16,7 @@ public class DatSupport {
     public static String[][] readDat(File file) throws IOException {
         List<String[]> res = new ArrayList<>();
         try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(file))) {
-            // (1) идентификатор формата читаем)
+            // (1) идентификатор формата читаем
             char[] datFormat = {'T', 'B', 'L', '1'};
             char[] checkFormat = new char[4];
             for (int i = 0; i < 4; i++) {
@@ -29,14 +29,15 @@ public class DatSupport {
             int columnCount = in.readInt();
 
             // (3) описание колонок. Перед каждой 'S' какой-то неизвестный бит, странно
-            String[] line = new String[columnCount];
+            String[] columnNames = new String[columnCount];
             int index = 0;
             for (int i = 0; i < in.available() && index < columnCount; i++) {
                 if (in.readByte() == 'S') {
-                    line[index] = in.readUTF();
+                    columnNames[index] = in.readUTF();
                     index++;
                 }
             }
+            res.add(columnNames);
             /*for (int i = 0; i < columnCount; i++) {
                 if (in.readByte() == 'S') {
                     System.out.println(in.readUTF());
@@ -66,8 +67,18 @@ public class DatSupport {
             int linesCount = in.readInt();
 
             // (4.2)
-
-            /*for (Object[] row : data) {
+            for (int i = 0; i < linesCount; i++) {
+                String[] line = new String[columnCount];
+                for (int j = 0; j < columnCount; j++) {
+                    char mark = (char) in.readByte();
+                    if (mark == '*')
+                        line[j] = in.readUTF();
+                    if (mark == '-')
+                        line[j] = "";
+                }
+                res.add(line);
+            }
+            /*for (Object[] row : data) { //залить в одномерный массив
                 for (Object v : row) {
                     out.writeByte(v != null ? '*' : '-');
                     if(v != null)
@@ -77,6 +88,28 @@ public class DatSupport {
         }
         return res.toArray(new String[0][]);
     }
+    /*
+    public class CsvSupport {
+    private static final char SEP = ',';
+
+    public static String[][] readCsv(File file) throws IOException {
+        List<String[]> res = new ArrayList<>();
+        try(BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String s;
+            int colCnt = -1;
+            while( ( s = br.readLine() ) != null ) {
+                String[] row = parseLine(s);
+                if(colCnt == -1)
+                    colCnt = row.length;
+                else if(colCnt != row.length)
+                    throw new FileFormatException("Rows contain different number of values.");
+                res.add(row);
+            }
+        }
+        return res.toArray(new String[0][]);
+    }
+
+    */
     public static void writeDat(File target, String[] colHdrs, Object[][] data) throws IOException {
         try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(target))) {
             // (1) идентификатор формата
