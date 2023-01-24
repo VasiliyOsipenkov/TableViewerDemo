@@ -43,6 +43,8 @@ public class MainFrame extends JFrame {
                 File f = chooser.getSelectedFile();
                 if(f.getName().endsWith(".csv"))
                     openCsv(f);
+                if (f.getName().endsWith(".dat"))
+                    openDat(f);
             }
         });
         tb.add(btn);
@@ -95,6 +97,7 @@ public class MainFrame extends JFrame {
 
     private void openDat(File f) {
         try {
+            String[][] dat = DatSupport.readDat(f);
 
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, ex, "Error reading DAT file", JOptionPane.ERROR_MESSAGE);
