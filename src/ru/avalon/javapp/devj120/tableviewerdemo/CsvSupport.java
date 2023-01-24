@@ -54,15 +54,35 @@ public class CsvSupport {
     }
 
     public static void writeCsv(File target, String[] colHdrs, Object[][] data) throws IOException {
-        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(target))) {
+        try(FileWriter out = new FileWriter(target)) {
+            for (int i = 0; i < colHdrs.length - 1; i++) {
+                out.write(cellHandler(colHdrs[i]));
+                out.write(",");
+            }
+            out.write(cellHandler(colHdrs[colHdrs.length - 1]));
+            out.write("\n");
 
-            for (Object[] row : data) {
-                for (Object v : row) {
-                    out.writeByte(v != null ? '*' : '-');
-                    if(v != null)
-                        out.writeUTF((String)v);
+            for (int i = 0; i < data.length; i++) {
+                Object[] row = data[i];
+                for (int j = 0; j < row.length - 1; j++) {
+                    out.write(cellHandler((String) row[j]));
+                    out.write(",");
                 }
+                out.write(cellHandler((String) row[row.length - 1]));
+                if (i < data.length - 1)
+                out.write("\n");
             }
         }
+    }
+    private static String cellHandler(String s) {
+        if (s == null)
+            return "";
+        if (s.contains("\"")) {
+            s = s.replace("\"", "\"\"");
+            s = "\"" + s + "\"";
+        }
+        if (s.matches("^([0-9]*\\,[0-9]+)$"))
+            s = "\"" + s + "\"";
+        return s;
     }
 }
