@@ -19,6 +19,7 @@ import javax.swing.JTable;
 import javax.swing.JToolBar;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
 public class MainFrame extends JFrame {
     private final JTable table;
@@ -90,8 +91,8 @@ public class MainFrame extends JFrame {
             String[][] csv = CsvSupport.readCsv(f);
             String[] colHdrs = csv[0];
             String[][] data = new String[csv.length - 1][];
-            System.arraycopy(csv, 1, data, 0, data.length);
-            ((DefaultTableModel)table.getModel()).setDataVector(data, colHdrs);
+            System.arraycopy(csv, 1, data, 0, data.length);//заполнение строк
+            table.setModel(new DataModel(colHdrs, data, CsvSupport.columnClassDetect(data)));
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, ex, "Error reading CSV file", JOptionPane.ERROR_MESSAGE);
         }
@@ -99,27 +100,21 @@ public class MainFrame extends JFrame {
 
     private void openDat(File f) {
         try {
-            String[][] dat = DatSupport.readDat(f);
+            DatSupport datSupport = new DatSupport();
+            String[][] dat = datSupport.readDat(f);
             String[] colHdrs = dat[0];
             String[][] data = new String[dat.length - 1][];
             System.arraycopy(dat, 1, data, 0, data.length);
-            ((DefaultTableModel)table.getModel()).setDataVector(data, colHdrs);
+            table.setModel(new DataModel(colHdrs, data, datSupport.columnDatClass));
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, ex, "Error reading DAT file", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void saveCsv(File f) {
-        DefaultTableModel tm = (DefaultTableModel) table.getModel();
-        String[] colHdrs = new String[tm.getColumnCount()];
-        for (int i = 0; i < colHdrs.length; i++) {
-            colHdrs[i] = tm.getColumnName(i);
-        }
-        Vector<Vector> rows = tm.getDataVector();
-        Object[][] data = new Object[rows.size()][];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = rows.get(i).toArray();
-        }
+        DataModel dm = (DataModel) table.getModel();
+        String[] colHdrs = dm.getColumnNames();
+        Object[][] data = dm.getRowData();
         try {
             CsvSupport.writeCsv(f, colHdrs, data);
         } catch (IOException ex) {
@@ -128,18 +123,11 @@ public class MainFrame extends JFrame {
     }
 
     private void saveDat(File f) {
-        DefaultTableModel tm = (DefaultTableModel) table.getModel();
-        String[] colHdrs = new String[tm.getColumnCount()];
-        for (int i = 0; i < colHdrs.length; i++) {
-            colHdrs[i] = tm.getColumnName(i);
-        }
-        Vector<Vector> rows = tm.getDataVector();
-        Object[][] data = new Object[rows.size()][];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = rows.get(i).toArray();
-        }
+        DataModel dm = (DataModel) table.getModel();
+        String[] colHdrs = dm.getColumnNames();
+        Object[][] data = dm.getRowData();
         try {
-            DatSupport.writeDat(f, colHdrs, data);
+            DatSupport.writeDat(f, colHdrs, data, dm.getColumnClass());
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, ex, "Error saving dat-file", JOptionPane.ERROR_MESSAGE);
         }

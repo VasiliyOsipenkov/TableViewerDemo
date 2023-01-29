@@ -7,11 +7,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class DatSupport {
+    public static Class[] columnDatClass;
 
     public static String[][] readDat(File file) throws IOException {
         List<String[]> res = new ArrayList<>();
@@ -27,7 +30,7 @@ public class DatSupport {
             }
 
             int columnCount = in.readInt();
-
+            columnDatClass = new Class[columnCount];
             // (3) описание колонок. Перед каждой 'S' какой-то неизвестный бит, странно
             String[] columnNames = new String[columnCount];
             int index = 0;
@@ -38,76 +41,91 @@ public class DatSupport {
                 }
             }
             res.add(columnNames);
-            /*for (int i = 0; i < columnCount; i++) {
-                if (in.readByte() == 'S') {
-                    System.out.println(in.readUTF());
-                    System.out.println(i);
-                }
-                switch (in.readByte()) {//Тип значения в колонке
-                    case 'I' : {
-                        break;
-                    }
-                    case 'N' : {
-                        break;
-                    }
-                    case 'S' : {
-                        break;
-                    }
-                    case 'D' : {
-                        break;
-                    }
-                    case 'B' : {
-                        break;
-                    }
-                    }
-                }*/
-
             // (4) данные таблицы
             // (4.1) количество строк
             int linesCount = in.readInt();
 
             // (4.2)
+
             for (int i = 0; i < linesCount; i++) {
                 String[] line = new String[columnCount];
                 for (int j = 0; j < columnCount; j++) {
                     char mark = (char) in.readByte();
-                    if (mark == '*')
+                    switch (mark) {
+                        case 'I' : {
+                            columnDatClass[j] = Integer.class;
+                            break;
+                        }
+                        case 'N' : {
+                            columnDatClass[j] = BigDecimal.class;
+                            break;
+                        }
+                        case 'S' : {
+                            columnDatClass[j] = String.class;
+                            break;
+                        }
+                        case 'D' : {
+                            columnDatClass[j] = LocalDate.class;
+                            break;
+                        }
+                        case 'B' : {
+                            columnDatClass[j] = Boolean.class;
+                            break;
+                        }
+                    }
+                    char nullMark = (char) in.readByte();
+
+                    if (nullMark == '*')
                         line[j] = in.readUTF();
-                    if (mark == '-')
-                        line[j] = "";
+                    if (nullMark == '-')
+                        line[j] = null;
                 }
                 res.add(line);
             }
         }
         return res.toArray(new String[0][]);
     }
-    public static void writeDat(File target, String[] colHdrs, Object[][] data) throws IOException {
+    public static void writeDat(File target, String[] colHdrs, Object[][] data, Class[] columnClass) throws IOException {
         try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(target))) {
-            // (1) идентификатор формата
+
             out.writeByte('T');
             out.writeByte('B');
             out.writeByte('L');
             out.writeByte('1');
-            
-            // (2) количество колонок
+
             out.writeInt(colHdrs.length);
-            
-            // (3) описание колонок
+
             for (String hdr : colHdrs) {
                 out.writeChar('S'); // (3.1)
                 out.writeUTF(hdr);  // (3.2)
             }
-            
-            // (4) данные таблицы
-            // (4.1) количество строк
+
             out.writeInt(data.length);
-            // (4.2)
-            for (Object[] row : data) {
-                for (Object v : row) {
-                    out.writeByte(v != null ? '*' : '-');
-                    if(v != null)
-                        out.writeUTF((String)v);
+
+            char[] colMark = new char[columnClass.length];
+            for (int i = 0; i < columnClass.length; i++) {
+                if (columnClass[i].equals(Integer.class))
+                    colMark[i] = 'I';
+                if (columnClass[i].equals(BigDecimal.class))
+                    colMark[i] = 'N';
+                if (columnClass[i].equals(String.class))
+                    colMark[i] = 'S';
+                if (columnClass[i].equals(LocalDate.class))
+                    colMark[i] = 'D';
+                if (columnClass[i].equals(Boolean.class))
+                    colMark[i] = 'B';
+
+            }
+
+            for (int i = 0; i < data.length; i++) {
+                Object[] row = data[i];
+                for (int j = 0; j < row.length; j++) {
+                    out.writeByte(colMark[j]);
+                    out.writeByte(row[j] != null ? '*' : '-');
+                    if (row[j] != null)
+                        out.writeUTF((String) row[j]);
                 }
+
             }
         }
     }

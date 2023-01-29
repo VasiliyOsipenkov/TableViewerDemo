@@ -1,6 +1,8 @@
 package ru.avalon.javapp.devj120.tableviewerdemo;
 
 import java.io.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,5 +86,36 @@ public class CsvSupport {
         if (s.matches("^([0-9]*\\,[0-9]+)$"))
             s = "\"" + s + "\"";
         return s;
+    }
+
+    public static Class[] columnClassDetect(String[][] rowData) {
+        Class[] columnClass = new Class[rowData[0].length];
+        for (int i = 0; i < columnClass.length; i++)
+            columnClass[i] = String.class;
+
+        for (int i = 0; i < rowData.length; i++) {
+            String[] row = rowData[i];
+            for (int j = 0; j < row.length; j++) {
+                if (row[j] == null)
+                    j++;
+                if (row[j].matches("^[0-9]+$") && !columnClass[j].equals(BigDecimal.class) && !columnClass[j].equals(String.class) && i > 0 ||
+                        row[j].matches("^[0-9]+$") && i == 0) {
+                    columnClass[j] = Integer.class;
+                }
+                if (row[j].matches("^([0-9]*\\,[0-9]+)$") && i == 0 ||
+                        row[j].matches("^([0-9]*\\,[0-9]+)$") && i > 0 && !columnClass[j].equals(String.class)) {
+                    columnClass[j] = BigDecimal.class;
+                }
+                if (row[j].matches("^(false|true)$") && i == 0 ||
+                        row[j].matches("^(false|true)$") && i > 0 && !columnClass[j].equals(String.class)) {
+                    columnClass[j] = Boolean.class;
+                }
+                if (row[j].matches("^\\d{4}-\\d{2}-\\d{2}$") && i == 0 ||
+                        row[j].matches("^\\d{4}-\\d{2}-\\d{2}$") && i > 0 && !columnClass[j].equals(String.class)) {
+                    columnClass[j] = LocalDate.class;
+                }
+            }
+        }
+        return columnClass;
     }
 }
